@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U.S. Presidents - System Threat vs. Reinforcement Analysis</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .chart-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .chart-subtitle {
+            text-align: center;
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+        
+        .legend-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #2c3e50;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid rgba(0,0,0,0.1);
+        }
+        
+        .chart-area {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 600px;
+            margin: 0 auto 30px;
+            background: white;
+            border: 2px solid #2c3e50;
+            border-radius: 8px;
+        }
+        
+        .chart-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(to right, #e0e0e0 1px, transparent 1px),
+                linear-gradient(to bottom, #e0e0e0 1px, transparent 1px);
+            background-size: 10% 10%;
+            background-position: 0 0;
+        }
+        
+        .quadrant-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        
+        .quadrant-lines::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #bdc3c7;
+            border-left: 2px dashed #bdc3c7;
+        }
+        
+        .quadrant-lines::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #bdc3c7;
+            border-top: 2px dashed #bdc3c7;
+        }
+        
+        .axis-labels-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+        
+        .x-axis-labels {
+            position: absolute;
+            bottom: -30px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #2c3e50;
+        }
+        
+        .y-axis-labels {
+            position: absolute;
+            left: -25px;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column-reverse;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #2c3e50;
+            text-align: right;
+        }
+        
+        .axis-titles {
+            position: absolute;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .x-axis-title {
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .y-axis-title {
+            left: -70px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+            transform-origin: center;
+        }
+        
+        .data-point {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            transition: transform 0.2s ease;
+        }
+        
+        .data-point:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            max-width: 300px;
+            line-height: 1.4;
+        }
+        
+        .tooltip-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+        
+        .tooltip-scores {
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        
+        .tooltip-annotation {
+            font-size: 11px;
+            font-style: italic;
+            opacity: 0.9;
+        }
+        
+        .president-legend {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .president-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .president-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .president-details {
+            flex-grow: 1;
+        }
+        
+        .president-name {
+            font-size: 14px;
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .president-scores {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 6px;
+        }
+        
+        .president-annotation {
+            font-size: 11px;
+            color: #5d6d7e;
+            line-height: 1.3;
+            font-style: italic;
+        }
+        
+        .axis-label-text {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: 80px;
+        }
+        
+        .caption {
+            font-size: 14px;
+            color: #5d6d7e;
+            text-align: center;
+            font-style: italic;
+            line-height: 1.5;
+            max-width: 800px;
+            margin: 20px auto 0;
+        }
+        
+        @media (max-width: 768px) {
+            .chart-container {
+                padding: 15px;
+            }
+            
+            .chart-title {
+                font-size: 20px;
+            }
+            
+            .chart-area {
+                height: 400px;
+            }
+            
+            .president-legend {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+            
+            .legend-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .data-point {
+                width: 28px;
+                height: 28px;
+                font-size: 11px;
+            }
+            
+            .tooltip {
+                max-width: 250px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <h1 class="chart-title">System Threat vs. Reinforcement — U.S. Presidents</h1>
+        <p class="chart-subtitle">Analysis of how U.S. Presidents impacted core power structures</p>
+        
+        <div class="legend-container">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #27ae60;"></div>
+                <span><strong>Green:</strong> Low Threat / High Reinforcement</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #f39c12;"></div>
+                <span><strong>Yellow:</strong> High Threat / High Reinforcement</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #95a5a6;"></div>
+                <span><strong>Gray:</strong> Low Threat / Low Reinforcement</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #e74c3c;"></div>
+                <span><strong>Red:</strong> High Threat / Low Reinforcement</span>
+            </div>
+        </div>
+        
+        <div class="chart-area" id="chartArea">
+            <div class="chart-background"></div>
+            <div class="quadrant-lines"></div>
+            
+            <div class="axis-labels-container">
+                <div class="x-axis-labels">
+                    <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                </div>
+                <div class="y-axis-labels">
+                    <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                </div>
+                <div class="axis-titles x-axis-title">Threat Score</div>
+                <div class="axis-titles y-axis-title">System Reinforcement Score</div>
+            </div>
+            
+            <div class="tooltip" id="tooltip"></div>
+        </div>
+        
+        <div class="axis-label-text">
+            <strong>X-Axis:</strong> Threat Score (0 = Fully Reinforces System, 10 = Maximum Threat)<br>
+            <strong>Y-Axis:</strong> System Reinforcement Score (0 = None, 10 = Maximum Gain)
+        </div>
+        
+        <div class="president-legend" id="presidentLegend"></div>
+        
+        <p class="caption">
+            This chart analyzes how U.S. Presidents either reinforced or threatened core power structures. 
+            The lower-right quadrant represents true systemic threats, while the upper-left shows presidents 
+            who greatly strengthened existing systems.
+        </p>
+    </div>
+
+    <script>
+        // Presidential data
+        const presidents = [
+            { 
+                name: "John F. Kennedy", 
+                threat: 10, 
+                reinforcement: 1, 
+                annotation: "Fired CIA director, opposed Vietnam escalation, challenged Federal Reserve, resisted Israel's nuclear program, pursued peace initiatives."
+            },
+            { 
+                name: "Abraham Lincoln", 
+                threat: 9.8, 
+                reinforcement: 1.2, 
+                annotation: "Defied central banking, issued greenbacks, dismantled slave-based economic power, consolidated federal control."
+            },
+            { 
+                name: "Andrew Jackson", 
+                threat: 9, 
+                reinforcement: 2, 
+                annotation: "Dismantled Second Bank of the U.S., opposed entrenched financial elites, survived assassination attempts."
+            },
+            { 
+                name: "Woodrow Wilson", 
+                threat: 9, 
+                reinforcement: 10, 
+                annotation: "Created Federal Reserve, entered WWI, built internationalist framework — foundational system builder despite high 'threat' score being reverse (structural impact)."
+            },
+            { 
+                name: "Dwight Eisenhower", 
+                threat: 6, 
+                reinforcement: 6, 
+                annotation: "Warned of military-industrial complex, maintained Cold War structure, balanced caution with system continuity."
+            },
+            { 
+                name: "Franklin D. Roosevelt", 
+                threat: 5, 
+                reinforcement: 8, 
+                annotation: "Expanded federal programs, regulated finance, but preserved elite control and global U.S. dominance."
+            },
+            { 
+                name: "Richard Nixon", 
+                threat: 6, 
+                reinforcement: 5, 
+                annotation: "Opened China, challenged CIA/FBI secrecy, faced removal during Watergate."
+            },
+            { 
+                name: "Ronald Reagan", 
+                threat: 4, 
+                reinforcement: 9, 
+                annotation: "Deregulated finance, expanded military budgets, strengthened corporate power despite populist rhetoric."
+            },
+            { 
+                name: "Bill Clinton", 
+                threat: 2, 
+                reinforcement: 9, 
+                annotation: "Cemented neoliberal consensus, deregulated banks, expanded corporate globalization."
+            },
+            { 
+                name: "George W. Bush", 
+                threat: 1, 
+                reinforcement: 10, 
+                annotation: "Expanded surveillance, war powers, and corporate integration post-9/11."
+            },
+            { 
+                name: "Barack Obama", 
+                threat: 2, 
+                reinforcement: 10, 
+                annotation: "Strengthened surveillance state, expanded drone warfare, consolidated elite trust in institutions."
+            },
+            { 
+                name: "Donald Trump", 
+                threat: 7.5, 
+                reinforcement: 4, 
+                annotation: "Disrupted narrative control, bypassed elite gatekeepers, eroded institutional trust, but preserved core economic/military structures."
+            },
+            { 
+                name: "Joe Biden", 
+                threat: 1, 
+                reinforcement: 10, 
+                annotation: "Institutional continuity figurehead, deepened censorship and globalist policy alignment."
+            }
+        ];
+
+        // Color mapping
+        function getPointColor(threat, reinforcement) {
+            if (threat < 5 && reinforcement >= 5) return '#27ae60'; // Green
+            if (threat >= 5 && reinforcement >= 5) return '#f39c12'; // Yellow
+            if (threat < 5 && reinforcement < 5) return '#95a5a6'; // Gray
+            if (threat >= 5 && reinforcement < 5) return '#e74c3c'; // Red
+        }
+
+        // Create president legend
+        function createPresidentLegend() {
+            const legendContainer = document.getElementById('presidentLegend');
+            presidents.forEach((president, index) => {
+                const presidentItem = document.createElement('div');
+                presidentItem.className = 'president-item';
+                
+                const presidentNumber = document.createElement('div');
+                presidentNumber.className = 'president-number';
+                presidentNumber.style.backgroundColor = getPointColor(president.threat, president.reinforcement);
+                presidentNumber.textContent = index + 1;
+                
+                const presidentDetails = document.createElement('div');
+                presidentDetails.className = 'president-details';
+                
+                const presidentName = document.createElement('div');
+                presidentName.className = 'president-name';
+                presidentName.textContent = president.name;
+                
+                const presidentScores = document.createElement('div');
+                presidentScores.className = 'president-scores';
+                presidentScores.innerHTML = `Threat: ${president.threat} | Reinforcement: ${president.reinforcement}`;
+                
+                const presidentAnnotation = document.createElement('div');
+                presidentAnnotation.className = 'president-annotation';
+                presidentAnnotation.textContent = president.annotation;
+                
+                presidentDetails.appendChild(presidentName);
+                presidentDetails.appendChild(presidentScores);
+                presidentDetails.appendChild(presidentAnnotation);
+                
+                presidentItem.appendChild(presidentNumber);
+                presidentItem.appendChild(presidentDetails);
+                legendContainer.appendChild(presidentItem);
+            });
+        }
+
+        // Create chart points
+        function createChart() {
+            const chartArea = document.getElementById('chartArea');
+            const tooltip = document.getElementById('tooltip');
+            
+            presidents.forEach((president, index) => {
+                // Calculate position (0-100% within chart area)
+                const x = (president.threat / 10) * 100;
+                const y = 100 - (president.reinforcement / 10) * 100; // Invert Y for screen coordinates
+                
+                // Create data point
+                const point = document.createElement('div');
+                point.className = 'data-point';
+                point.style.backgroundColor = getPointColor(president.threat, president.reinforcement);
+                point.style.left = x + '%';
+                point.style.top = y + '%';
+                point.textContent = index + 1;
+                
+                // Add hover events
+                point.addEventListener('mouseenter', (e) => {
+                    tooltip.style.display = 'block';
+                    tooltip.innerHTML = `
+                        <div class="tooltip-name">${president.name}</div>
+                        <div class="tooltip-scores">Threat: ${president.threat} | Reinforcement: ${president.reinforcement}</div>
+                        <div class="tooltip-annotation">${president.annotation}</div>
+                    `;
+                });
+                
+                point.addEventListener('mousemove', (e) => {
+                    const rect = chartArea.getBoundingClientRect();
+                    
+                    let tooltipX = e.clientX - rect.left + 15;
+                    let tooltipY = e.clientY - rect.top - 10;
+                    
+                    // Prevent tooltip from going off-screen horizontally
+                    if (tooltipX + 320 > rect.width) {
+                        tooltipX = e.clientX - rect.left - 335; // Show on left side instead
+                    }
+                    
+                    // Prevent tooltip from going off-screen vertically
+                    if (tooltipY < 0) {
+                        tooltipY = e.clientY - rect.top + 25; // Show below cursor instead
+                    }
+                    
+                    tooltip.style.left = tooltipX + 'px';
+                    tooltip.style.top = tooltipY + 'px';
+                });
+                
+                point.addEventListener('mouseleave', () => {
+                    tooltip.style.display = 'none';
+                });
+                
+                // Add touch events for mobile
+                point.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    tooltip.style.display = 'block';
+                    tooltip.innerHTML = `
+                        <div class="tooltip-name">${president.name}</div>
+                        <div class="tooltip-scores">Threat: ${president.threat} | Reinforcement: ${president.reinforcement}</div>
+                        <div class="tooltip-annotation">${president.annotation}</div>
+                    `;
+                    const rect = chartArea.getBoundingClientRect();
+                    const touch = e.touches[0];
+                    
+                    let tooltipX = touch.clientX - rect.left + 15;
+                    let tooltipY = touch.clientY - rect.top - 40;
+                    
+                    // Prevent tooltip from going off-screen horizontally
+                    if (tooltipX + 320 > rect.width) {
+                        tooltipX = touch.clientX - rect.left - 335;
+                    }
+                    
+                    // Prevent tooltip from going off-screen vertically  
+                    if (tooltipY < 0) {
+                        tooltipY = touch.clientY - rect.top + 25;
+                    }
+                    
+                    tooltip.style.left = tooltipX + 'px';
+                    tooltip.style.top = tooltipY + 'px';
+                });
+                
+                chartArea.appendChild(point);
+            });
+            
+            // Hide tooltip when touching elsewhere
+            document.addEventListener('touchstart', (e) => {
+                if (!e.target.classList.contains('data-point')) {
+                    tooltip.style.display = 'none';
+                }
+            });
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function() {
+            createPresidentLegend();
+            createChart();
+        });
+    </script>
+</body>
+</html>
