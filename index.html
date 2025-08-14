@@ -561,10 +561,19 @@
                         tooltipX = e.clientX - rect.left - 335; // Show on left side instead
                     }
                     
+                    // Prevent tooltip from going off-screen on the LEFT side
+                    if (tooltipX < 0) {
+                        tooltipX = e.clientX - rect.left + 15; // Force to right side
+                    }
+                    
                     // Prevent tooltip from going off-screen vertically
                     if (tooltipY < 0) {
                         tooltipY = e.clientY - rect.top + 25; // Show below cursor instead
                     }
+                    
+                    // Final check - ensure tooltip stays within chart bounds
+                    if (tooltipX < 10) tooltipX = 10;
+                    if (tooltipX + 320 > rect.width - 10) tooltipX = rect.width - 330;
                     
                     tooltip.style.left = tooltipX + 'px';
                     tooltip.style.top = tooltipY + 'px';
@@ -594,10 +603,19 @@
                         tooltipX = touch.clientX - rect.left - 335;
                     }
                     
+                    // Prevent tooltip from going off-screen on the LEFT side
+                    if (tooltipX < 0) {
+                        tooltipX = touch.clientX - rect.left + 15; // Force to right side
+                    }
+                    
                     // Prevent tooltip from going off-screen vertically  
                     if (tooltipY < 0) {
                         tooltipY = touch.clientY - rect.top + 25;
                     }
+                    
+                    // Final boundary checks for mobile
+                    if (tooltipX < 10) tooltipX = 10;
+                    if (tooltipX + 320 > rect.width - 10) tooltipX = rect.width - 330;
                     
                     tooltip.style.left = tooltipX + 'px';
                     tooltip.style.top = tooltipY + 'px';
